@@ -1,97 +1,150 @@
-# NCP Vision
+NCP-VISION — Windows Setup Guide
 
-This project is a minimal synthetic demo for the NCP-VISION prototype. The app includes a citizen submission flow, officer dashboard, and public tracking page.
+This project is a minimal synthetic demo for the NCP-VISION prototype. The application includes:
 
-## Prerequisites
+- Citizen submission flow
+- Officer dashboard
+- Public application tracking page
+
+Prerequisites
+
+Install the following:
 
 - Python 3.11+
 - Node.js 18+
 - npm
-- A terminal with access to the project folder
+- Windows 10/11
+- PowerShell
 
-## 1) Install dependencies
+Verify your installations:
 
-From the project root:
+python --version
+node --version
+npm --version
 
-```bash
-python3 -m venv .venv
-./.venv/bin/pip install --upgrade pip
-./.venv/bin/pip install -r backend/requirements.txt
-cd frontend && npm install && npm install recharts
-```
+1. Install Dependencies
 
-If you prefer the Makefile shortcut:
+Open PowerShell and navigate to the project root directory:
 
-```bash
-make setup
-```
+cd path\to\NCP-VISION
 
-## 2) Start the backend
+Create a Python virtual environment:
 
-In one terminal, from the project root:
+python -m venv .venv
 
-```bash
+Upgrade pip:
+
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+
+Install backend dependencies:
+
+.\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+
+Install frontend dependencies:
+
+cd frontend
+npm install
+npm install recharts
+cd ..
+
+2. Start the Backend
+
+Open the first PowerShell terminal.
+
+Navigate to the project root (if necessary):
+
+cd path\to\NCP-VISION
+
+Start the backend:
+
 cd backend
-../.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
+..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-Or:
+The backend will run on:
 
-```bash
-make dev-backend
-```
+http://localhost:8000
 
-The backend will create the SQLite database automatically on first run and seed demo users/data.
+The SQLite database will be created automatically on the first run, along with demo users and data.
 
-## 3) Start the frontend
+3. Start the Frontend
 
-In a second terminal, from the project root:
+Open a second PowerShell terminal.
 
-```bash
+Navigate to the project root:
+
+cd path\to\NCP-VISION
+
+Start the frontend:
+
 cd frontend
 npm run dev -- --hostname 0.0.0.0 --port 3000
-```
 
-Or:
+The frontend will run on:
 
-```bash
-make dev-frontend
-```
+http://localhost:3000
 
-## 4) Open the app
+4. Open the Application
 
-Visit:
+Open your browser and visit:
 
-- http://localhost:3000
+http://localhost:3000
 
-The landing page includes the required synthetic-data banner and links to the login and tracking flows.
+The landing page includes:
 
-## 5) Demo accounts
+- Synthetic-data banner
+- Login flow
+- Public tracking flow
 
-Use these credentials on the login page:
+5. Demo Accounts
 
-- Citizen: `citizen1` / `demo123`
-- Officer: `officer1` / `demo123`
-- Admin: `admin1` / `demo123`
+Use the following credentials on the login page.
 
-## 6) Public tracking
+Role| Username| Password
+Citizen| citizen1| demo123
+Officer| officer1| demo123
+Admin| admin1| demo123
 
-You can check a submitted application without logging in via:
+6. Public Application Tracking
 
-- http://localhost:3000/track/<tracking-number>
+Applications can be tracked without logging in.
 
 Example:
 
-```text
 http://localhost:3000/track/NCP-KP-2026-000001
-```
 
-## 7) Useful notes
+Replace the tracking number with the relevant application tracking number.
 
-- The backend API runs on port 8000.
-- The frontend runs on port 3000.
-- All data is synthetic; the banner is shown on every page.
-- If a port is already in use, stop the existing process and retry.
+7. Run Tests
+
+From the project root:
+
+.\.venv\Scripts\python.exe -m pytest -q
+
+8. Useful Information
+
+Component| Port
+Backend API| 8000
+Frontend| 3000
+
+Additional notes:
+
+- All application data is synthetic.
+- The synthetic-data banner appears on every page.
+- The backend uses SQLite.
+- Keep both backend and frontend terminals running while using the application.
+- If a port is already occupied, stop the process using that port before restarting the application.
+
+9. Stop the Application
+
+In both PowerShell terminals, press:
+
+Ctrl + C
+
+This terminates the respective development server.
+
+---
+
+Important: NCP-VISION is intentionally a minimal working demonstration of the compressed project scope. It is not a full production-ready application.
 - If you want to run tests:
 
 ```bash
