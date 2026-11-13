@@ -1,0 +1,7 @@
+.venv/
+node_modules/
+.next/
+.DS_Store
+*.log
+backend/uploads/*
+!backend/uploads/.gitkeep

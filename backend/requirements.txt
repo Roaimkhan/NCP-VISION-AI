@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlmodel
+python-multipart
+pyjwt
+easyocr
+opencv-python-headless
+pillow
+rapidfuzz
+pytest
+httpx

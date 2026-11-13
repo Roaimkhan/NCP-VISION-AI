@@ -1,0 +1,1 @@
+- [Phase 1] Use the CPU PyTorch index for EasyOCR installation in this Linux environment so the required stack installs cleanly without bringing in CUDA wheels.
