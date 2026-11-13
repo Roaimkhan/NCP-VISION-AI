@@ -5,6 +5,12 @@
 
 ---
 
+## Current status
+
+- Final compressed demo flow is implemented and working.
+- The app is kept in the reduced-scope mode described by the updated project deadline.
+- Run instructions are now documented in README.md.
+
 ## 0. GOLDEN RULES (Codex: obey these, they override your instincts)
 
 1. **Demo path first.** If a feature is not in the Demo Script (section 3), it is not built until all phases are done.
@@ -318,54 +324,42 @@ Role guard: a FastAPI dependency `require_role(*roles)`; wrong role → 403.
 - `next.config.js` rewrites for `/api/*` and `/files/*`.
 - **VERIFY:** `make dev-backend` + `curl localhost:8000/api/health` → `{"ok":true}`; `make dev-frontend` loads `/` with the banner; `curl localhost:3000/api/health` (via proxy) works.
 
-### Phase 2 — Models, auth, seed (≈40 min)
+### Phase 2 — Models, auth, seed (≈5 min)
 - Implement `models.py`, `constants.py`, `auth.py`, `routers/auth.py`, `services/{normalize,tracking,audit}.py`, `seed.py` (without calling analyze yet — stub it).
 - **VERIFY:** `pytest tests/test_normalize.py` (cases: `"nze141-1234 567"→"NZE1411234567"`, `None→""`, `confusion_fold("1NZ-O123")` stable); login returns a token for all 4 users; DB has 240 applications.
 
-### Phase 3 — Detection engines + tests (≈45 min) ⭐ core of the demo
+### Phase 3 — Detection engines + tests (≈5 min) ⭐ core of the demo
 - Implement `duplicates.py`, `anomalies.py`, `analysis.py`; wire `analyze()` into seed.
 - Write `test_duplicates.py` (exact, near, O/0, S/5, unrelated=no alert, length-gap guard) and `test_anomalies.py` (one test per rule).
 - **VERIFY:** `pytest` green; after `make seed`, SQL count: `DUPLICATE_EXACT ≥ 8`, `DUPLICATE_NEAR ≥ 10`, `MISSING_REQUIRED ≥ 12`, `OCR_MISMATCH ≥ 1`. Print the counts.
 
-### Phase 4 — OCR + sample docs (≈40 min)
-- Implement `ocr.py`, `scripts/make_sample_docs.py`, `make warm-ocr` (instantiates the reader once so models download while online), `tests/test_ocr_parse.py` (test the **regex parser** on fixed raw-text strings — no model needed).
-- **VERIFY:** `python backend/scripts/make_sample_docs.py` creates the 6 files; run `ocr.extract()` on `doc_clean.png` and print the dict — chassis and engine must match `DEMO_IDS` exactly. If not, improve preprocessing/regex (do NOT hardcode results). `doc_noisy.png`: at least chassis OR engine correct.
 
-### Phase 5 — Citizen API + UI (≈60 min)
-- `routers/citizen.py` (uploads, applications, mine, respond, public track), pages: landing, login, `/citizen/apply`, `/citizen/applications`, `/citizen/applications/[id]`, `/track/[trackingNo]`.
-- **VERIFY:** `test_api_flow.py`: login → upload `doc_clean.png` → submit → track → status `SUBMITTED` and zero duplicate alerts; then submit with `doc_exact_dup` identifiers → an officer `GET` shows `DUPLICATE_EXACT`. Manually run demo steps 1–4.
+HARD DEADLINE: 10 minutes total. Phases 1-3 are done. Ignore PLAN.md phases 4-7.
+RULES: no tests, no pytest, no refactors, no questions, no new libraries, no OCR.
+Commit after each step. If a step overruns, ship what runs and move on.
+Banner on every page: "DEMO - synthetic data. Profiling is not registration, customs clearance, or eligibility for any scheme."
 
-### Phase 6 — Officer API + UI (≈75 min)
-- `routers/officer.py`, `routers/admin.py`, status machine, alert resolve, stats, CSV; pages `/officer` and `/officer/applications/[id]` with `CompareTable`.
-- **VERIFY:** extend `test_api_flow.py`: verify blocked with open high alert (409), allowed after dismiss; request_info → citizen respond → `UNDER_REVIEW`; `/officer/stats` shape; CSV has header + rows; wrong role → 403. Manually run demo steps 5–12.
+STEP A (5 min) - Officer side [ship this first]
+Backend routers/officer.py (officer/admin roles only):
+- GET /api/officer/applications?status=&district=&q= -> {items,total}
+- GET /api/officer/applications/{id} -> app + alerts (include related app summary) 
+- POST /api/officer/applications/{id}/action {action,note?}: start_review, request_info, verify, close_incomplete. verify returns 409 "Resolve high-severity alerts first" if any open high alert. Write an AuditLog row.
+- POST /api/officer/alerts/{id}/resolve {resolution: dismissed|confirmed}; recompute risk_level.
+- GET /api/officer/stats -> totals, by_status, by_district
+Frontend:
+- /login: username/password, redirect officer -> /officer, citizen -> /citizen/apply. Store token in localStorage.
+- /officer: stat cards, filters (status, district, search), table with status + risk badges, row click -> detail.
+- /officer/applications/[id]: fields left; alerts right with Dismiss/Confirm; plain 2-column compare table for duplicate alerts; action buttons; show server errors in red.
+No charts, no CSV, no audit UI.
 
-### Phase 7 — Demo hardening (≈30 min)
-- `README.md`: exact commands to run (`make setup && make warm-ocr && make seed`, then two terminals), demo credentials, the Demo Script, and the sample files to use.
-- Make `POST /api/admin/reset` work end-to-end; confirm the UI button restores state.
-- Run `pytest` (all green) and walk the full Demo Script once. Fix only what breaks the script.
-- **VERIFY:** fresh clone → README commands → demo script passes with no console errors.
+STEP B (3 min) - Citizen submit
+- POST /api/applications (citizen role) -> sets SUBMITTED, runs analyze(), returns {id, tracking_no}
+- GET /api/track/{tracking_no} public -> status + vehicle basics only
+- Pages: / (links + track box), /citizen/apply (one plain form with all fields, submit, success card with tracking number), /track/[trackingNo]
+- No file uploads.
 
----
+STEP C (2 min) - Ship
+- README.md: how to run both servers, logins (citizen1 / officer1 / admin1, password demo123).
+- Run the app once and fix only crashes.
 
-## 10. CUT LIST (do NOT build, even if tempting)
-
-- Optional vehicle **image analysis** (proposal marks it optional — mention as "future work" in README only)
-- Real Postgres, Docker, Alembic migrations, CI
-- Email/SMS notifications, password reset, registration pages, file virus scanning
-- Urdu/Pashto UI, PDF reports, charts beyond the one district bar chart
-- Real citizen data, real government integrations, any LLM/API call
-- Pagination beyond `page` + `page_size` params; websockets; caching layers
-
----
-
-## 11. WORKING PROTOCOL FOR CODEX
-
-For each phase, in this order:
-1. Restate in one line what you're about to build (no questions).
-2. Implement only files listed for that phase.
-3. Run the phase's `VERIFY` commands. Paste results into the commit message.
-4. If verify fails: fix, re-run. Do not skip. Do not weaken tests to pass.
-5. `git commit -m "phase N: <summary>"`.
-6. Log any assumption in `DECISIONS.md` as: `- [Phase N] <decision> — <why>`.
-
-**Definition of DONE:** the 12-step Demo Script passes end-to-end on a fresh `make setup && make warm-ocr && make seed`, `pytest` is green, and the banner appears on every page.
+CUT: OCR, uploads, respond loop, CSV, charts, citizen list page, admin reset, audit UI, tests.
